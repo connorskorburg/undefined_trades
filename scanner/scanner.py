@@ -6,7 +6,6 @@ import time
 from datetime import datetime, timedelta, date
 from flask_cors import CORS, cross_origin
 import yfinance as yf
-import pandas as pd
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -25,10 +24,13 @@ def main():
     
     # format start/end dates for market open
     weekday = datetime.today().weekday()
+    # if its saturday, set start date to friday
     if weekday == 5:
         start = date.today() + timedelta(days=-1)
+    # if its Sunday, set start date to friday
     if weekday == 6:
         start = date.today() + timedelta(days=-2)
+    # if its Monday, set start date to friday
     if weekday == 0:
         start = date.today() + timedelta(days=-3)
 
