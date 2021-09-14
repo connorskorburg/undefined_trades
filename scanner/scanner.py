@@ -13,11 +13,12 @@ cors = CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
 
 is_inside_bar = lambda prev_high, prev_low, current_high, current_low: True if prev_high >= current_high and prev_low <= current_low else False
+is_outside_bar = lambda prev_high, prev_low, current_high, current_low: True if prev_high < current_high and prev_low > current_low else False
 
 @app.route("/")
 @cross_origin()
 def main():
-    inside_bars = []
+    data = []
     tickers = 'C PTON JNJ AAPL WMT DIS ORCL UPS MSFT FB UBER AMD NVDA'
     start = date.today() + timedelta(days=1)
     end = date.today() + timedelta(days=1)
@@ -48,19 +49,28 @@ def main():
             current_high=current_high,
             current_low=current_low
         )
-        if inside_bar:
-            inside_bars.append({
+
+        outside_bar = is_outside_bar(
+            prev_high=prev_high,
+            prev_low=prev_low,
+            current_high=current_high,
+            current_low=current_low
+        )
+
+        if inside_bar or outside_bar:
+            data.append({
                 "ticker": ticker,
                 "start": start,
                 "end": datetime.today(),
                 "inside_bar": inside_bar,
+                "outside_bar": outside_bar,
                 "previous_high": round(prev_high, 2),
                 "previous_low": round(prev_low, 2),
                 "current_high": round(current_high, 2),
                 "current_low": round(current_low, 2),
             })
 
-    return jsonify({ "data": inside_bars })
+    return jsonify({ "data": data })
 
 
 if __name__ == "__main__":
