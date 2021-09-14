@@ -14,12 +14,12 @@ app.config["CORS_HEADERS"] = "Content-Type"
 is_inside_bar = lambda prev_high, prev_low, current_high, current_low: True if prev_high >= current_high and prev_low <= current_low else False
 is_outside_bar = lambda prev_high, prev_low, current_high, current_low: True if prev_high < current_high and prev_low > current_low else False
 
-@app.route("/")
+@app.route("/daily_scanner")
 @cross_origin()
-def main():
+def daily_scanner():
     data = []
     tickers = 'C PTON JNJ AAPL WMT DIS ORCL UPS MSFT FB UBER AMD NVDA'
-    start = date.today() + timedelta(days=1)
+    start = date.today() - timedelta(days=1)
     end = date.today() + timedelta(days=1)
     
     # format start/end dates for market open
@@ -38,39 +38,44 @@ def main():
     response = yf.Tickers(tickers)
     for ticker in tickers.split(" "):
         quote = response.tickers.get(ticker).history(start=start, end=end)
+
+        if not quote.empty:
         
-        prev_high = quote.iloc[0, 1]
-        prev_low = quote.iloc[0, 2]
+            prev_high = quote.iloc[0, 1]
+            prev_low = quote.iloc[0, 2]
 
-        current_high = quote.iloc[1, 1]
-        current_low = quote.iloc[1, 2]
+            current_high = quote.iloc[1, 1]
+            current_low = quote.iloc[1, 2]
 
-        inside_bar = is_inside_bar(
-            prev_high=prev_high,
-            prev_low=prev_low,
-            current_high=current_high,
-            current_low=current_low
-        )
+            close = quote.iloc[1, 3]
 
-        outside_bar = is_outside_bar(
-            prev_high=prev_high,
-            prev_low=prev_low,
-            current_high=current_high,
-            current_low=current_low
-        )
+            inside_bar = is_inside_bar(
+                prev_high=prev_high,
+                prev_low=prev_low,
+                current_high=current_high,
+                current_low=current_low
+            )
 
-        if inside_bar or outside_bar:
-            data.append({
-                "ticker": ticker,
-                "start": start,
-                "end": datetime.today(),
-                "inside_bar": inside_bar,
-                "outside_bar": outside_bar,
-                "previous_high": round(prev_high, 2),
-                "previous_low": round(prev_low, 2),
-                "current_high": round(current_high, 2),
-                "current_low": round(current_low, 2),
-            })
+            outside_bar = is_outside_bar(
+                prev_high=prev_high,
+                prev_low=prev_low,
+                current_high=current_high,
+                current_low=current_low
+            )
+
+            if inside_bar or outside_bar:
+                data.append({
+                    "ticker": ticker,
+                    "start": start,
+                    "end": datetime.today(),
+                    "inside_bar": inside_bar,
+                    "outside_bar": outside_bar,
+                    "close": round(close, 2),
+                    "previous_high": round(prev_high, 2),
+                    "previous_low": round(prev_low, 2),
+                    "current_high": round(current_high, 2),
+                    "current_low": round(current_low, 2),
+                })
 
     return jsonify({ "data": data })
 
