@@ -63,7 +63,10 @@ const WatchList = () => {
         <Sider style={{ backgroundColor: '#fff'}} width={250} className="site-layout-background">
             <Modal
                 visible={showTickerModal}
-                onCancel={() => setShowTickerModal(false)}
+                onCancel={() => {
+                    setShowTickerModal(false)
+                    setTicker('')
+                } }
                 onOk={() => removeTicker(ticker)}
             >
                 <p>{`Are you sure you want to remove $${ticker} from your watchlist?`}</p>
@@ -78,11 +81,9 @@ const WatchList = () => {
                 pagination={false}
                 onRow={(record) => {
                     return {
-                      onClick: event => showRemoveTicker(record, event),
-                    //   onClick: event => console.log(event, record),
+                      onDoubleClick: event => showRemoveTicker(record, event),
                     }}
                 }
-                // onClick={(row) => showRemoveTicker(row)}
             />
         </Sider>
     )
