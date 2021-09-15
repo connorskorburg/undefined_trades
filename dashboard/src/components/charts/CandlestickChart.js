@@ -69,6 +69,7 @@ const CandlestickChart = () => {
     useEffect(() => {
         fetchCandlestickData();
     }, [timeFrame])
+    
     const { TabPane } = Tabs;
     return (
         <Layout style={{ padding: '0 24px 24px' }}>
