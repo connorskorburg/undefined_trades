@@ -14,11 +14,13 @@ app.config["CORS_HEADERS"] = "Content-Type"
 is_inside_bar = lambda prev_high, prev_low, current_high, current_low: True if prev_high >= current_high and prev_low <= current_low else False
 is_outside_bar = lambda prev_high, prev_low, current_high, current_low: True if prev_high < current_high and prev_low > current_low else False
 
-@app.route("/daily_scanner")
+@app.route("/daily_scanner", methods=['GET'])
 @cross_origin()
 def daily_scanner():
     data = []
-    tickers = 'C PTON JNJ AAPL WMT DIS ORCL UPS MSFT FB UBER AMD NVDA'
+    tickers = request.args.get('tickers')
+    if not tickers:
+        tickers = 'SPY QQQ'
     start = date.today() - timedelta(days=1)
     end = date.today() + timedelta(days=1)
     
@@ -37,33 +39,34 @@ def daily_scanner():
     # fetch candlestick data
     response = yf.Tickers(tickers)
     for ticker in tickers.split(" "):
-        quote = response.tickers.get(ticker).history(start=start, end=end)
-
-        if not quote.empty:
         
-            prev_high = quote.iloc[0, 1]
-            prev_low = quote.iloc[0, 2]
+        if ticker:
+            quote = response.tickers.get(ticker).history(start=start, end=end)
 
-            current_high = quote.iloc[1, 1]
-            current_low = quote.iloc[1, 2]
+            if not quote.empty:
+            
+                prev_high = quote.iloc[0, 1]
+                prev_low = quote.iloc[0, 2]
 
-            close = quote.iloc[1, 3]
+                current_high = quote.iloc[1, 1]
+                current_low = quote.iloc[1, 2]
 
-            inside_bar = is_inside_bar(
-                prev_high=prev_high,
-                prev_low=prev_low,
-                current_high=current_high,
-                current_low=current_low
-            )
+                close = quote.iloc[1, 3]
 
-            outside_bar = is_outside_bar(
-                prev_high=prev_high,
-                prev_low=prev_low,
-                current_high=current_high,
-                current_low=current_low
-            )
+                inside_bar = is_inside_bar(
+                    prev_high=prev_high,
+                    prev_low=prev_low,
+                    current_high=current_high,
+                    current_low=current_low
+                )
 
-            if inside_bar or outside_bar:
+                outside_bar = is_outside_bar(
+                    prev_high=prev_high,
+                    prev_low=prev_low,
+                    current_high=current_high,
+                    current_low=current_low
+                )
+
                 data.append({
                     "ticker": ticker,
                     "start": start,
