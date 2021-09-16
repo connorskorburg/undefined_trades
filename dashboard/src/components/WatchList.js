@@ -33,12 +33,13 @@ const WatchList = () => {
     }
     
     const showRemoveTicker = (record, event) => {
-        setTicker(record.ticker);
+        setQuery(record.ticker);
         setShowTickerModal(true);
     }
 
     const removeTicker = query => {
-        let newTickers = tickers.replace(query).split(" ").filter(record => (record && record !== 'undefined') && record).join(" ");
+        let newTickers = tickers.replace(query).split(" ").filter(record => (record && record !== 'undefined' && !record.includes('undefined')) && record).join(" ");
+        console.log(newTickers);
         localStorage.setItem('tickers', newTickers);
         setTickers(newTickers);
         setQuery('')

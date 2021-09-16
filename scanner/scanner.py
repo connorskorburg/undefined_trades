@@ -41,7 +41,13 @@ def daily_scanner():
     for ticker in tickers.split(" "):
         
         if ticker:
-            quote = response.tickers.get(ticker).history(start=start, end=end)
+            print(ticker)
+            try:
+                quote = response.tickers.get(ticker).history(start=start, end=end)
+            except AttributeError as error:
+                print('COULD NOT FIND DATA FOR :', ticker)
+                continue
+            # quote = response.tickers.get(ticker).history(start=start, end=end)
 
             if not quote.empty:
             
