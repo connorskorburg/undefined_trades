@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import 'antd/dist/antd.css';
 import { Modal, Layout, Button, Table, Input } from 'antd';
 import axios from 'axios';
+import TickerContext from '../context/ticker/tickerContext';
 
 const WatchList = () => {
+    const context = useContext(TickerContext);
+    const { ticker, setTicker } = context;
+    console.log({ticker})
+    const [query, setQuery] = useState('');
     const { Sider } = Layout;
     const [watchList, setWatchList] = useState([]);
     const [tickers, setTickers] = useState(localStorage.getItem('tickers') || '')
-    const [ticker, setTicker] = useState('')
     const [showTickerModal, setShowTickerModal] = useState(false);
 
     const fetchWatchList = async () => {
@@ -16,15 +20,16 @@ const WatchList = () => {
     }
 
     const handleTickerChange = e => {
-        setTicker(e.target.value.toUpperCase());
+        setQuery(e.target.value.toUpperCase());
     }
 
     const addTicker = () => {
-        const newTickers = tickers + ' ' + ticker;
+        setTicker(query);
+        const newTickers = tickers + ' ' + query;
         localStorage.setItem('tickers', newTickers);
         const savedTickers = localStorage.getItem('tickers');
         setTickers(savedTickers);
-        setTicker('');
+        setQuery('');
     }
     
     const showRemoveTicker = (record, event) => {
@@ -32,11 +37,11 @@ const WatchList = () => {
         setShowTickerModal(true);
     }
 
-    const removeTicker = ticker => {
-        let newTickers = tickers.replace(ticker).split(" ").filter(record => (record && record !== 'undefined') && record).join(" ");
+    const removeTicker = query => {
+        let newTickers = tickers.replace(query).split(" ").filter(record => (record && record !== 'undefined') && record).join(" ");
         localStorage.setItem('tickers', newTickers);
         setTickers(newTickers);
-        setTicker('')
+        setQuery('')
         setShowTickerModal(false);
     }
 
@@ -67,12 +72,12 @@ const WatchList = () => {
                     setShowTickerModal(false)
                     setTicker('')
                 } }
-                onOk={() => removeTicker(ticker)}
+                onOk={() => removeTicker(query)}
             >
                 <p>{`Are you sure you want to remove $${ticker} from your watchlist?`}</p>
             </Modal>
             <div style={{ display: 'flex' }}>
-                <Input type='text' value={ticker} onChange={(e) => handleTickerChange(e)} />
+                <Input type='text' value={query} onChange={(e) => handleTickerChange(e)} />
                 <Button type='primary' onClick={() => addTicker()}>Add</Button>
             </div>
             <Table 
@@ -81,6 +86,7 @@ const WatchList = () => {
                 pagination={false}
                 onRow={(record) => {
                     return {
+                      onClick: () => setTicker(record.ticker),
                       onDoubleClick: event => showRemoveTicker(record, event),
                     }}
                 }

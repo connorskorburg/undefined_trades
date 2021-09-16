@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import 'antd/dist/antd.css';
 import { Layout, Tabs } from 'antd';
 import axios from 'axios';
 import Chart from 'react-apexcharts'
+import TickerContext from '../../context/ticker/tickerContext';
 
-const { Content } = Layout;
+
 const CandlestickChart = () => {
-    const ticker = 'SPY';
+    const { Content } = Layout;
+    const context = useContext(TickerContext);
+    const { ticker } = context;
     const [candlestickData, setCandlestickData] = useState([]);
     const [timeFrame, setTimeFrame] = useState('1m');
     const options = {
@@ -68,7 +71,7 @@ const CandlestickChart = () => {
 
     useEffect(() => {
         fetchCandlestickData();
-    }, [timeFrame])
+    }, [timeFrame, ticker])
     
     const { TabPane } = Tabs;
     return (
