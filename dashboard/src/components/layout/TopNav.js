@@ -5,8 +5,8 @@ import { Layout } from 'antd';
 const TopNav = () => {
     const { Header } = Layout;
     return (
-        <Header className="header">
-            <h3 style={{ color: '#fff', fontWeight: 'bold'}}>undefined trades</h3>
+        <Header style={{ backgroundColor: '#fff'}} className="header">
+            <h3 style={{ color: '#000', fontWeight: 'bold'}}>undefined trades</h3>
         </Header>
     )
 }

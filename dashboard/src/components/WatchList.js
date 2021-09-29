@@ -6,9 +6,9 @@ import TickerContext from '../context/ticker/tickerContext';
 
 const WatchList = () => {
     const context = useContext(TickerContext);
-    const { ticker, setTicker } = context;
-    console.log({ticker})
+    const { ticker } = context;
     const [query, setQuery] = useState('');
+    const [didWatchlistChange,setDidWatchlistChange] = useState(false);
     const { Sider } = Layout;
     const [watchList, setWatchList] = useState([]);
     const [tickers, setTickers] = useState(localStorage.getItem('tickers') || '')
@@ -17,6 +17,14 @@ const WatchList = () => {
     const fetchWatchList = async () => {
         const response = await axios.get(`http://localhost:5000/daily_scanner`, { params: { 'tickers': tickers } } )
         setWatchList(response.data.data);
+        setDidWatchlistChange(false);
+    }
+
+    const fetchSavedWatchList = async () => {
+        const response = await axios.get(`http://localhost:5000/scanner`)
+        console.log('loading saved watchlist...');
+        setWatchList(response.data.data);
+        setDidWatchlistChange(false);
     }
 
     const handleTickerChange = e => {
@@ -24,12 +32,12 @@ const WatchList = () => {
     }
 
     const addTicker = () => {
-        setTicker(query);
         const newTickers = tickers + ' ' + query;
         localStorage.setItem('tickers', newTickers);
         const savedTickers = localStorage.getItem('tickers');
         setTickers(savedTickers);
         setQuery('');
+        setDidWatchlistChange(true);
     }
     
     const showRemoveTicker = (record, event) => {
@@ -39,11 +47,11 @@ const WatchList = () => {
 
     const removeTicker = query => {
         let newTickers = tickers.replace(query).split(" ").filter(record => (record && record !== 'undefined' && !record.includes('undefined')) && record).join(" ");
-        console.log(newTickers);
         localStorage.setItem('tickers', newTickers);
         setTickers(newTickers);
         setQuery('')
         setShowTickerModal(false);
+        setDidWatchlistChange(true);
     }
 
     const columns = [
@@ -51,27 +59,61 @@ const WatchList = () => {
           title: 'Symbol',
           dataIndex: 'ticker',
           key: 'ticker',
-          render: text => <>{`$${text}`}</>
+          render: (text, record) => {
+              return(
+                <div  style={{ fontWeight: 'bold', textAlign: 'center', color: record.is_green_day ? 'green' : '#d12e49' }} >{`$${text}`}</div>
+              ) 
+            }
         },
         {
           title: 'Price',
-          dataIndex: 'close',
-          key: 'close',
-          render: text => <>{`$${text}`}</>
+          dataIndex: 'daily_close',
+          key: 'daily_close',
+          render: (text, record) => {
+            return (
+                <div  style={{ fontWeight: 'bold', textAlign: 'center', color: record.is_green_day ? 'green' : '#d12e49' }} >{`$${text}`}</div>
+            )
+          }
+        },
+        {
+            title: 'Day',
+            dataIndex: 'strat_label_day',
+            key: 'strat_label_day',
+            render: (strat_label, record) => {
+                return (
+                    <div style={{ fontWeight: 'bold', textAlign: 'center', color: record.is_green_day ? 'green' : '#d12e49' }}>{strat_label}</div>
+                )
+            }
+        },
+        {
+            title: 'Week',
+            dataIndex: 'strat_label_week',
+            key: 'strat_label_week',
+            render: (strat_label, record) => {
+                return (
+                    <div style={{ fontWeight: 'bold', textAlign: 'center', color: record.is_green_week ? 'green' : '#d12e49' }}>{strat_label}</div>
+                )
+            }
         }
     ];
 
     useEffect(() => {
-        fetchWatchList();
-    }, [tickers])
+        fetchSavedWatchList();
+    }, [])
+
+    useEffect(() => {
+        if(didWatchlistChange === true) {
+            console.log('watchlist reloading...')
+            fetchWatchList();
+        }
+    }, [didWatchlistChange])
 
     return (
-        <Sider style={{ backgroundColor: '#fff'}} width={250} className="site-layout-background">
+        <Sider style={{ margin:'2rem 0 2rem 2rem', height: '100%', backgroundColor: '#fff'}} width={400} className="site-layout-background">
             <Modal
                 visible={showTickerModal}
                 onCancel={() => {
                     setShowTickerModal(false)
-                    setTicker('')
                 } }
                 onOk={() => removeTicker(query)}
             >
@@ -82,12 +124,12 @@ const WatchList = () => {
                 <Button type='primary' onClick={() => addTicker()}>Add</Button>
             </div>
             <Table 
+                scroll={{ y: 525 }}
                 columns={columns}
                 dataSource={watchList}
                 pagination={false}
                 onRow={(record) => {
                     return {
-                      onClick: () => setTicker(record.ticker),
                       onDoubleClick: event => showRemoveTicker(record, event),
                     }}
                 }
