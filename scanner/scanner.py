@@ -89,17 +89,20 @@ def daily_scanner():
 
     weekday = datetime.today().weekday()
     prev_monday = (date.today() -  timedelta(days=weekday)).strftime('%Y-%m-%d')
+    current_month_start = date.today().replace(day=1)
+    prev_month_start = (current_month_start - timedelta(days=1)).replace(day=1).strftime('%Y-%m-%d')
+    current_month_start = current_month_start.strftime('%Y-%m-%d')
     start, end = get_start_end_dates()
     
     # fetch candlestick data
     response = yf.Tickers(tickers)
-    # print(response)
     for ticker in tickers.split(" "):
         
         if ticker:
             try:
                 quote = response.tickers.get(ticker).history(start=start, end=end)
                 history = response.tickers.get(ticker).history(period='ytd', interval='1wk')
+                monthly_history = response.tickers.get(ticker).history(period='ytd', interval='1mo')
             except AttributeError as error:
                 print('COULD NOT FIND DATA FOR :', ticker)
                 continue
@@ -161,6 +164,44 @@ def daily_scanner():
                     current_open=weekly_open,
                     current_close=weekly_close
                 )
+            # get last two months data
+            if not monthly_history.empty:
+                monthly_dates = list(monthly_history.index.values)
+                monthly_ticker_dates = []
+                for monthly_d in monthly_dates:
+                    ticker_date = pd.to_datetime(str(monthly_d)) 
+                    ticker_date = ticker_date.strftime('%Y-%m-%d')
+                    monthly_ticker_dates.append(ticker_date)
+
+                current_month_start_index = monthly_ticker_dates.index(current_month_start)
+                prev_month_start_index = monthly_ticker_dates.index(prev_month_start)
+                month_start = monthly_ticker_dates[current_month_start_index]
+                prev_month_start = monthly_ticker_dates[prev_month_start_index]
+                
+                prev_month_high = monthly_history.iloc[prev_month_start_index, 1]
+                prev_month_low = monthly_history.iloc[prev_month_start_index, 2]
+                monthly_open = monthly_history.iloc[current_month_start_index, 0]
+                monthly_close = daily_close
+                
+                current_month_high = 0
+                current_month_low = 9999999
+                for x in range(current_month_start_index, len(monthly_history)):
+                    monthly_record = monthly_history.iloc[x]
+                    monthly_record_high = monthly_history.iloc[x, 1]
+                    monthly_record_low = monthly_history.iloc[x, 2]
+                    if monthly_record_high > current_month_high:
+                        current_month_high = monthly_record_high
+                    if monthly_record_low < current_month_low:
+                        current_month_low = monthly_record_low
+
+                monthly_data = format_ticker_data(
+                    prev_high=prev_month_high,
+                    prev_low=prev_month_low,
+                    current_high=current_month_high,
+                    current_low=current_month_low,
+                    current_open=monthly_open,
+                    current_close=monthly_close
+                )
 
                 ticker_json = {
                     "ticker": ticker,
@@ -190,6 +231,18 @@ def daily_scanner():
                     "previous_week_low": round(prev_week_low, 2),
                     "current_week_high": round(current_week_high, 2),
                     "current_week_low": round(current_week_low, 2),
+                    "inside_month": monthly_data.get('inside_bar'),
+                    "outside_month": monthly_data.get('outside_bar'),
+                    "strat_number_month": monthly_data.get('strat_number'),
+                    "strat_label_month": monthly_data.get('strat_label'),
+                    "is_green_month": monthly_data.get('is_green'),
+                    "is_red_month": monthly_data.get('is_red'),
+                    "monthly_close": round(monthly_close, 2),
+                    "monthly_open": round(monthly_open, 2),
+                    "previous_month_high": round(prev_month_high, 2),
+                    "previous_month_low": round(prev_month_low, 2),
+                    "current_month_high": round(current_month_high, 2),
+                    "current_month_low": round(current_month_low, 2)
                 }
                 
                 data.append(ticker_json)

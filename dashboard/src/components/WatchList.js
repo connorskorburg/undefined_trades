@@ -94,6 +94,16 @@ const WatchList = () => {
                     <div style={{ fontWeight: 'bold', textAlign: 'center', color: record.is_green_week ? 'green' : '#d12e49' }}>{strat_label}</div>
                 )
             }
+        },
+        {
+            title: 'Month',
+            dataIndex: 'strat_label_month',
+            key: 'strat_label_month',
+            render: (strat_label, record) => {
+                return (
+                    <div style={{ fontWeight: 'bold', textAlign: 'center', color: record.is_green_month ? 'green' : '#d12e49' }}>{strat_label}</div>
+                )
+            }
         }
     ];
 
@@ -109,7 +119,7 @@ const WatchList = () => {
     }, [didWatchlistChange])
 
     return (
-        <Sider style={{ margin:'2rem 0 2rem 2rem', height: '100%', backgroundColor: '#fff'}} width={400} className="site-layout-background">
+        <Sider style={{ margin:'2rem 0 2rem 2rem', height: '100%', backgroundColor: '#fff'}} width={500} className="site-layout-background">
             <Modal
                 visible={showTickerModal}
                 onCancel={() => {
